@@ -129,35 +129,48 @@ def single_user_crawler(site_link):
         """
         Top Badges and count of badges
         """
-        badges = {}
+        badges = {
+            "gold":None,
+            "silver":None,
+            "bronze":None,
+        }
         try:
             "Gold"
-            gold_badges_soup = soup.find("svg", class_ = "fc-gold").find_parent().find_parent().find_parent()
-            # print(gold_badge.text)
-            top_badges_soup = gold_badges_soup.find_all("a")
+            try:
+                gold_badges_soup = soup.find("svg", class_ = "fc-gold").find_parent().find_parent().find_parent()
+                # print(gold_badge.text)
+                top_badges_soup = gold_badges_soup.find_all("a")
 
-            badges["gold"] = {
-                "count" : gold_badges_soup.find("div", class_ = "fs-title").get_text().strip(),
-                "top_badges" : [b.get_text().strip() for b in top_badges_soup],
-            }
-
+                badges["gold"] = {
+                    "count" : gold_badges_soup.find("div", class_ = "fs-title").get_text().strip(),
+                    "top_badges" : [b.get_text().strip() for b in top_badges_soup],
+                }
+            except:
+                pass
+            
             "Silver"
-            silver_badges_soup = soup.find("svg", class_ = "fc-silver").find_parent().find_parent().find_parent()
-            top_badges_soup = silver_badges_soup.find_all("a")
+            try:
+                silver_badges_soup = soup.find("svg", class_ = "fc-silver").find_parent().find_parent().find_parent()
+                top_badges_soup = silver_badges_soup.find_all("a")
 
-            badges["silver"] = {
-                "count" : silver_badges_soup.find("div", class_ = "fs-title").get_text().strip(),
-                "top_badges" : [b.get_text().strip() for b in top_badges_soup],
-            }
+                badges["silver"] = {
+                    "count" : silver_badges_soup.find("div", class_ = "fs-title").get_text().strip(),
+                    "top_badges" : [b.get_text().strip() for b in top_badges_soup],
+                }
+            except:
+                pass
 
             "Bronze"
-            bronze_badges_soup = soup.find("svg", class_ = "fc-bronze").find_parent().find_parent().find_parent()
-            top_badges_soup = bronze_badges_soup.find_all("a")
+            try:
+                bronze_badges_soup = soup.find("svg", class_ = "fc-bronze").find_parent().find_parent().find_parent()
+                top_badges_soup = bronze_badges_soup.find_all("a")
 
-            badges["bronze"] = {
-                "count" : bronze_badges_soup.find("div", class_ = "fs-title").get_text().strip(),
-                "top_badges" : [b.get_text().strip() for b in top_badges_soup],
-            }
+                badges["bronze"] = {
+                    "count" : bronze_badges_soup.find("div", class_ = "fs-title").get_text().strip(),
+                    "top_badges" : [b.get_text().strip() for b in top_badges_soup],
+                }
+            except:
+                pass
             
         except:
             pass
@@ -181,7 +194,7 @@ def single_user_crawler(site_link):
         with open("logs/scrape_user_error_log.txt","a") as f:
             f.write(f"{site_link}\n")
 
-        time.sleep(180)
+        raise Exception("Unexpected Response")
 
     # print(json.dumps(user_dict, indent=4))
     return user_dict
@@ -212,11 +225,12 @@ def pagewise_user_crawler(page):
             # print(user_site_link["href"])
 
     except Exception as e:
-        print(e)
+        print(f"{e} at page {page}")
         with open("logs/page_scrape_error_log.txt","a") as f:
-            f.write(f"Description: {e}\n")
+            f.write(f"{page}\n")
         
-        time.sleep(180)
+        # Give 10 mins break
+        time.sleep(600)
 
     print(f"Finished page {page}\n")
     return page_user_list
@@ -228,17 +242,14 @@ def main():
         page_end = int(sys.argv[2])
     except:
         page_start = int(input("Enter Start Page: "))
-        page_end = int(input("Enter End page(excludes the last page): "))
+        page_end = int(input("Enter End page: "))
 
-    current_batch_users = []
-    for page in range(page_start, page_end):
+    for page in range(page_start, page_end+1):
         current_page_users = pagewise_user_crawler(page)
-        current_batch_users.extend(current_page_users)
-        time.sleep(1)
-
-    with open(f"users_data/users_page{page_start}-page{page_end-1}.json", "w", encoding="utf-8") as f:
-        json.dump(current_batch_users, f, indent=4)
-
+        with open(f"users_data/users_page{page}.json", "w", encoding="utf-8") as f:
+            json.dump(current_page_users, f, indent=4)
+        
+        time.sleep(0.25)
 
 if __name__ == "__main__":
     os.makedirs('users_data', exist_ok=True)
